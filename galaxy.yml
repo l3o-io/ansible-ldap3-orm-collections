@@ -1,0 +1,25 @@
+namespace: l3o
+name: ldap3_orm
+version: 1.0.0
+readme: README.md
+authors:
+- Christian Felder <webmaster@bsm-felder.de>
+description: ldap3-orm Ansible modules
+license:
+- LGPL-3.0-or-later
+license_file: COPYING
+tags:
+  - ldap
+  - active directory
+  - ldap3
+  - ldap3-orm
+  - rfc4510
+  - rfc2307
+  - rfc2307bis
+dependencies: {}
+repository: https://github.com/l3o-io/ansible-ldap3_orm-collections.git
+documentation: https://github.com/l3o-io/ansible-ldap3_orm-collections
+homepage: https://github.com/l3o-io/ansible-ldap3_orm-collections
+issues: https://github.com/l3o-io/ansible-ldap3_orm-collections/issues
+build_ignore:
+  - .idea
