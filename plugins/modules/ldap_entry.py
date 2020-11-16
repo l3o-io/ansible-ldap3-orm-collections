@@ -18,7 +18,7 @@ version_added: "1.0.0"
 description:
   - Add or remove LDAP entries based on ldap3-orm models.
   - Modifies existing entries.
-  - Uses ldap3_orm configuration files. 
+  - Uses ldap3_orm configuration files.
 requirements:
   - "ldap3_orm >= 2.6.0"
 options:
@@ -49,7 +49,7 @@ options:
       - Attributes necessary to create an entry defined by I(objectClass).
       - Attribute keys may be used as templates in I(dn) and are replaced
         with its values.
-      - Required when I(state=present) or when using templates in dn. 
+      - Required when I(state=present) or when using templates in dn.
   state:
     description:
       - Whether a ldap entry should be present or absent
@@ -143,7 +143,7 @@ class LdapEntry(object):
         self.state = self.module.params.get("state")
 
         self.object_classes = self.module.params.get("objectClass")
-        self.dn =  self.module.params.get("dn")
+        self.dn = self.module.params.get("dn")
         self.attributes = self.module.params.get("attributes")
 
         # create config singleton and connection
@@ -217,6 +217,7 @@ class LdapEntry(object):
             self.results["changed"] = True
             self.results["actions"].append("Created dn '{}'".format(entry.entry_dn))
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -258,6 +259,7 @@ def main():
     )
     LdapEntry(module, results)
     module.exit_json(**results)
+
 
 if __name__ == "__main__":
     main()
