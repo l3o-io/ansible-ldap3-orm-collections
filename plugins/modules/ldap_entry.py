@@ -48,13 +48,13 @@ options:
     description:
       - Attributes necessary to create an entry defined by I(objectClass).
       - Attribute keys may be used as templates in I(dn) and are replaced
-        with its values
+        with its values.
       - Required when I(state=present) or when using templates in dn. 
   state:
     description:
       - Whether a ldap entry should be present or absent
     default: present
-    type str
+    type: str
     choices:
       - present
       - absent
