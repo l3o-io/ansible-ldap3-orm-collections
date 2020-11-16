@@ -15,9 +15,9 @@ tags:
   - rfc2307
   - rfc2307bis
 dependencies: {}
-repository: https://github.com/l3o-io/ansible-ldap3_orm-collections.git
-documentation: https://github.com/l3o-io/ansible-ldap3_orm-collections
-homepage: https://github.com/l3o-io/ansible-ldap3_orm-collections
-issues: https://github.com/l3o-io/ansible-ldap3_orm-collections/issues
+repository: https://github.com/l3o-io/ansible-ldap3-orm-collections.git
+documentation: https://github.com/l3o-io/ansible-ldap3-orm-collections
+homepage: https://github.com/l3o-io/ansible-ldap3-orm-collections
+issues: https://github.com/l3o-io/ansible-ldap3-orm-collections/issues
 build_ignore:
   - .idea
