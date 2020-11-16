@@ -10,9 +10,9 @@ license:
 license_file: COPYING
 tags:
   - ldap
-  - active directory
+  - active_directory
   - ldap3
-  - ldap3-orm
+  - ldap3_orm
   - rfc4510
   - rfc2307
   - rfc2307bis
