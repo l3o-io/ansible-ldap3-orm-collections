@@ -174,14 +174,15 @@ class LdapEntry(object):
     def absent(self):
         origin = self._get_entry()[1]
         if origin:
-            if self.connection.delete(origin.entry_dn):
-                self.results["changed"] = True
-                self.results["actions"].append(
-                    "Deleted dn '{}'".format(origin.entry_dn))
-            else:
+            if not self.module.check_mode and not self.connection.delete(
+                    origin.entry_dn):
                 self.module.fail_json(
                     msg="Could not delete dn '{}'. {}".format(
                         origin.entry_dn, self.connection.result["message"]))
+
+            self.results["changed"] = True
+            self.results["actions"].append(
+                "Deleted dn '{}'".format(origin.entry_dn))
 
     def present(self):
         entry, origin = self._get_entry()
@@ -201,21 +202,23 @@ class LdapEntry(object):
                     setattr(origin, attr, attribute.value)
 
             if origin.entry_changes:
-                if origin.entry_commit_changes():
-                    self.results["changed"] = True
-                    self.results["actions"].append(
-                        "Modified dn '{}'".format(entry.entry_dn))
-                else:
+                if not self.module.check_mode and not origin.entry_commit_changes():
                     self.module.fail_json(
                         msg="Could not modify dn '{}'. {}".format(
                             entry.entry_dn, self.connection.result["message"]))
+
+                self.results["changed"] = True
+                self.results["actions"].append(
+                    "Modified dn '{}'".format(entry.entry_dn))
         else:
-            # create new entry
-            self.connection.add(entry.entry_dn, entry.object_classes,
-                                entry.entry_attributes_as_dict)
+            if not self.module.check_mode:
+                # create new entry
+                self.connection.add(entry.entry_dn, entry.object_classes,
+                                    entry.entry_attributes_as_dict)
 
             self.results["changed"] = True
-            self.results["actions"].append("Created dn '{}'".format(entry.entry_dn))
+            self.results["actions"].append(
+                "Created dn '{}'".format(entry.entry_dn))
 
 
 def main():
