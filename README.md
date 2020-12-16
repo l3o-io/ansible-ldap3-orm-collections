@@ -24,6 +24,15 @@ collection name, and modules name that you want to use, e.g:
               cn: Guest User
 ```
 
+Ansible dynamic inventory plugin for ipaHostGroups
+--------------------------------------------------
+
+This collection provides a dynamic inventory plugin for creating an inventory
+from ``ipaHostGroup`` entries on a freeipa server.
+
+* [Hostgroup inventory plugin](README-freeipa_ldap3_orm.md)
+
+
 License
 -------
 
