@@ -7,6 +7,9 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+from time import ctime
+import tempfile
+
 DOCUMENTATION = """
     name: freeipa_ldap3_orm
     plugin_type: inventory
@@ -50,6 +53,15 @@ class InventoryModule(BaseInventoryPlugin):
     def verify_file(self, path):
         # the following commands may raise an exception otherwise return True
         cfg = read_config(path)
+        with tempfile.NamedTemporaryFile(mode='w+', prefix='cf_', delete=False)\
+                as fd:
+            fd.write(ctime() + '\n')
+            fd.write(repr(cfg) + '\n')
+            fd.write('\n')
+            fd.write("# file: %s\n" % path)
+            fd.write(open(path, 'r').read())
+            fd.write('\n')
+
         config.apply(cfg)
         return True
 
