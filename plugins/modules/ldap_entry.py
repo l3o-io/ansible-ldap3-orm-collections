@@ -58,6 +58,8 @@ options:
     choices:
       - present
       - absent
+extends_documentation_fragment:
+- decrypt
 '''
 
 
@@ -224,7 +226,7 @@ class LdapEntry(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            config=dict(type="str", required=True),
+            config=dict(type="path", required=True),
             attributes=dict(default={}, type="dict"),
             cls=dict(type="str"),
             objectClass=dict(type='raw'),
