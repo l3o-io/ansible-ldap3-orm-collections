@@ -36,10 +36,13 @@ connconfig = dict(
 """
 
 
+import tempfile
+
 from ldap3_orm import ObjectDef, Reader
 from ldap3_orm._config import read_config, config
 
 from ansible.module_utils.six import iteritems
+from ansible.parsing.vault import VaultLib
 from ansible.plugins.inventory import BaseInventoryPlugin
 
 
@@ -47,14 +50,29 @@ class InventoryModule(BaseInventoryPlugin):
 
     NAME = "freeipa_ldap3_orm"
 
+    encrypted = None
+
     def verify_file(self, path):
+        with open(path, 'r') as fd:
+            content = fd.read()
+        if VaultLib.is_encrypted(content):
+            self.encrypted = content
         # the following commands may raise an exception otherwise return True
-        cfg = read_config(path)
-        config.apply(cfg)
+        if not self.encrypted:
+            cfg = read_config(path)
+            config.apply(cfg)
         return True
 
     def parse(self, inventory, loader, path, cache=True):
         BaseInventoryPlugin.parse(self, inventory, loader, path, cache)
+        if self.encrypted:
+            libvault = VaultLib(secrets=loader._vault.secrets)
+            decrypted = libvault.decrypt(self.encrypted, path)
+            with tempfile.NamedTemporaryFile(delete=False) as fd:
+                fd.write(decrypted)
+                fd.flush()
+                cfg = read_config(fd.name)
+            config.apply(cfg)
         # late import to create connection in respect to loaded config
         from ldap3_orm.connection import conn
 
