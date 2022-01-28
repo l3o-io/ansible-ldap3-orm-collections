@@ -36,8 +36,6 @@ connconfig = dict(
 """
 
 
-import tempfile
-
 from ldap3_orm import ObjectDef, Reader
 from ldap3_orm._config import read_config, config
 
