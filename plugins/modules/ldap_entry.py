@@ -191,8 +191,9 @@ class LdapEntry(object):
         # if entry already exists, update existing entry
         if origin:
             origin = origin.entry_writable()
-            # add missing classes
-            missing_classes = set(entry.objectClass) - set(origin.objectClass)
+            # add missing classes (ignore case)
+            origin_ocls_lower = set(ocls.lower() for ocls in origin.objectClass)
+            missing_classes = set(ocls for ocls in entry.objectClass if ocls.lower() not in origin_ocls_lower)
             if missing_classes:
                 origin.objectClass += missing_classes
             # update values in origin from new instance entry
