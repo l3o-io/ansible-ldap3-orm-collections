@@ -62,6 +62,8 @@ class InventoryModule(BaseInventoryPlugin):
 
         hg_base_dn = config.userconfig.get("hostgroup_base_dn",
                                            "cn=hostgroups," + config.base_dn)
+        host_base_dn = config.userconfig.get("host_base_dn",
+                                             "cn=computers," + config.base_dn)
         group_bases = {}  # collect one-level of inherited host groups
         r = Reader(conn, ObjectDef("ipaHostGroup", conn), hg_base_dn)
         for hg in r.search():
@@ -70,6 +72,14 @@ class InventoryModule(BaseInventoryPlugin):
             for dn in hg.member:
                 host = dn.split(',')[0].replace("fqdn=", '')
                 self.inventory.add_host(host, group)
+
+                rhost = Reader(conn, ObjectDef("ieee802device", conn),
+                               host_base_dn, "(fqdn=" + host +")")
+                if rhost.search():
+                    if rhost[0].macAddress:
+                        self.inventory.set_variable(host, "macaddress",
+                                                    rhost[0].macAddress.value)
+
                 for hg_member in hg.memberOf:
                     if hg_member.endswith(hg_base_dn):
                         hg_name = hg_member.split(',')[0].replace("cn=", '')
