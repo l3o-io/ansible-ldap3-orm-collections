@@ -1,6 +1,6 @@
 namespace: l3o
 name: ldap3_orm
-version: 1.2.2
+version: 1.3.0
 readme: README.md
 authors:
 - Christian Felder <webmaster@bsm-felder.de>
