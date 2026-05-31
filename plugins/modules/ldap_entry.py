@@ -50,6 +50,12 @@ options:
       - Attribute keys may be used as templates in I(dn) and are replaced
         with its values.
       - Required when I(state=present) or when using templates in dn.
+      - Each attribute's value can be a string, list, or a dictionary.
+      - If the value is a dictionary it can contain a C(state) (I(present),
+        I(absent), or I(ifnotpresent)) and a C(value). The default state is
+        I(present) which enforces the exact value on the entry. I(absent)
+        removes the attribute from the entry. I(ifnotpresent) only creates
+        the attribute if it does not already exist.
   state:
     description:
       - Whether a ldap entry should be present or absent
@@ -90,6 +96,31 @@ EXAMPLES = r'''
     config: default
     state: absent
     dn: "uid=guest,ou=People,dc=example,dc=com"
+
+- name: Create entry with attribute states
+  l3o.ldap3_orm.ldap_entry:
+    config: default
+    dn: "uid={uid},ou=People,dc=example,dc=com"
+    objectClass: inetOrgPerson
+    attributes:
+      uid: guest
+      sn:
+        state: present
+        value: User
+      cn: Guest User
+      description:
+        state: ifnotpresent
+        value: Some description
+
+- name: Remove attribute from existing entry
+  l3o.ldap3_orm.ldap_entry:
+    config: default
+    dn: "uid=guest,ou=People,dc=example,dc=com"
+    objectClass: inetOrgPerson
+    attributes:
+      uid: guest
+      description:
+        state: absent
 
 # Reuses existing ldap3_orm configuration files
 # see: :py:class:`~ldap3_orm.config.config` for more details
@@ -147,6 +178,7 @@ class LdapEntry(object):
         self.object_classes = self.module.params.get("objectClass")
         self.dn = self.module.params.get("dn")
         self.attributes = self.module.params.get("attributes")
+        self.attribute_actions = self._get_attribute_actions(self.attributes)
 
         # create config singleton and connection
         config.apply(read_config(self.module.params.get("config")))
@@ -157,10 +189,22 @@ class LdapEntry(object):
         if self.state == "absent":
             self.absent()
 
+    def _get_attribute_actions(self, attributes):
+        attr_actions = {}
+        if attributes:
+            for attr_name, attr_value in attributes.items():
+                if isinstance(attr_value, dict) and "state" in attr_value:
+                    attr_actions[attr_name] = attr_value
+                else:
+                    attr_actions[attr_name] = {"state": "present", "value": attr_value}
+        return attr_actions
+
     def _get_entry(self):
         if self.object_classes and self.dn and self.module.params["attributes"]:
             cls = EntryType(self.dn, self.object_classes, self.connection)
-            entry = cls(**self.module.params["attributes"])
+            clean_attrs = {n: i["value"] for n, i in self.attribute_actions.items()
+                           if i["state"] != "absent"}
+            entry = cls(**clean_attrs)
             search_dn = entry.entry_dn
         else:
             entry = None
@@ -196,14 +240,26 @@ class LdapEntry(object):
             missing_classes = set(ocls for ocls in entry.object_classes if ocls.lower() not in origin_ocls_lower)
             if missing_classes:
                 origin.objectClass += missing_classes
-            # update values in origin from new instance entry
+            # remove attributes that should be removed (state: absent)
+            for attr_name, attr_info in self.attribute_actions.items():
+                state = attr_info["state"]
+                if state == "absent":
+                    if hasattr(origin, attr_name):
+                        delattr(origin, attr_name)
+            # update origin from entry (state: present or ifnotpresent)
             for attr in entry.entry_attributes:
                 if attr in "objectClass":
                     continue
+                attr_info = self.attribute_actions.get(attr, {"state": "present"})
+                state = attr_info["state"]
                 attribute = getattr(entry, attr)
-                if getattr(origin, attr) != attribute:
+                if state == "ifnotpresent":
+                    # do not overwrite existing attributes
+                    if not hasattr(origin, attr):
+                        setattr(origin, attr, attribute.value)
+                elif getattr(origin, attr) != attribute:
+                    # update values in origin from new instance entry
                     setattr(origin, attr, attribute.value)
-
             if origin.entry_changes:
                 if not self.module.check_mode and not origin.entry_commit_changes():
                     self.module.fail_json(
