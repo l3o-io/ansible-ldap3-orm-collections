@@ -50,6 +50,13 @@ options:
       - Attribute keys may be used as templates in I(dn) and are replaced
         with its values.
       - Required when I(state=present) or when using templates in dn.
+    type: dict
+  remove_attributes:
+    description:
+      - Attributes to remove from the entry, if it already existed.
+      - Only used when I(state=present).
+    required: False
+    type: list
   state:
     description:
       - Whether a ldap entry should be present or absent
@@ -147,6 +154,7 @@ class LdapEntry(object):
         self.object_classes = self.module.params.get("objectClass")
         self.dn = self.module.params.get("dn")
         self.attributes = self.module.params.get("attributes")
+        self.remove_attributes = self.module.params.get("remove_attributes")
 
         # create config singleton and connection
         config.apply(read_config(self.module.params.get("config")))
@@ -158,9 +166,9 @@ class LdapEntry(object):
             self.absent()
 
     def _get_entry(self):
-        if self.object_classes and self.dn and self.module.params["attributes"]:
+        if self.object_classes and self.dn and self.attributes:
             cls = EntryType(self.dn, self.object_classes, self.connection)
-            entry = cls(**self.module.params["attributes"])
+            entry = cls(**self.attributes)
             search_dn = entry.entry_dn
         else:
             entry = None
@@ -204,6 +212,10 @@ class LdapEntry(object):
                 if getattr(origin, attr) != attribute:
                     setattr(origin, attr, attribute.value)
 
+            if self.remove_attributes:
+                for attr in self.remove_attributes:
+                    getattr(origin, attr).remove()
+
             if origin.entry_changes:
                 if not self.module.check_mode and not origin.entry_commit_changes():
                     self.module.fail_json(
@@ -229,6 +241,7 @@ def main():
         argument_spec=dict(
             config=dict(type="path", required=True),
             attributes=dict(default={}, type="dict"),
+            remove_attributes=dict(default=[], type="list"),
             cls=dict(type="str"),
             objectClass=dict(type='raw'),
             dn=dict(type="str"),
