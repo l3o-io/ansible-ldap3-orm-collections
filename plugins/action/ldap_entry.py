@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2020 Christian Felder <webmaster@bsm-felder.de>
 # GNU Lesser General Public License v3.0+
